@@ -1,8 +1,12 @@
 (function () {
+  'use strict';
+
   const exprEl = document.getElementById('expr');
   const resultEl = document.getElementById('result');
+  const keys = document.querySelector('.keys');
 
-  let expr = '';            // इंटरनल expression, जिसमें * / - + होते हैं
+  const MAX_LEN = 40;     // इनपुट की सीमा, ताकि display न टूटे
+  let expr = '';          // ASCII expression: digits . ( ) + - * /
   let justEvaluated = false;
 
   // ---------- Display ----------
@@ -10,60 +14,124 @@
     return s.replace(/\*/g, '×').replace(/\//g, '÷').replace(/-/g, '−');
   }
 
-  function showInput() {
+  function show() {
+    const text = expr ? pretty(expr) : '0';
     exprEl.textContent = '';
-    resultEl.textContent = expr ? pretty(expr) : '0';
+    resultEl.textContent = text;
     resultEl.classList.remove('error');
+    resultEl.classList.toggle('long', text.length > 10);
   }
 
-  // ---------- Input actions ----------
+  function showError(msg) {
+    exprEl.textContent = '';
+    resultEl.textContent = msg;
+    resultEl.classList.add('error');
+    resultEl.classList.remove('long');
+  }
+
+  // ---------- Input ----------
   function input(v) {
-    if (justEvaluated && /[0-9.(]/.test(v)) expr = '';  // नया नंबर शुरू
+    if (expr.length >= MAX_LEN) return;
+    if (justEvaluated && /[0-9.(]/.test(v)) expr = '';   // result के बाद नया नंबर
     justEvaluated = false;
     expr += v;
-    showInput();
+    show();
   }
 
   function backspace() {
-    if (justEvaluated) { expr = ''; justEvaluated = false; }
+    if (justEvaluated) expr = '';
     else expr = expr.slice(0, -1);
-    showInput();
+    justEvaluated = false;
+    show();
   }
 
   function clearAll() {
     expr = '';
     justEvaluated = false;
-    showInput();
+    show();
   }
 
+  // expression के आखिर वाला नंबर (जिसमें . हो सकता है) और उसकी शुरुआत
+  function lastNumber(s) {
+    const m = /(\d*\.?\d*)$/.exec(s);
+    return m && m[1] !== '' ? { text: m[1], index: m.index } : null;
+  }
+
+  // ± : नंबर का चिन्ह बदलें
+  function toggleSign() {
+    if (!expr) return;
+    justEvaluated = false;
+
+    // पूरा expression सिर्फ़ एक नंबर है: 5 ↔ -5
+    if (/^-?\d*\.?\d*$/.test(expr)) {
+      expr = expr.startsWith('-') ? expr.slice(1) : '-' + expr;
+      show();
+      return;
+    }
+
+    // (-3) को वापस 3 करें
+    const wrapped = /\(-(\d*\.?\d*)\)$/.exec(expr);
+    if (wrapped) {
+      expr = expr.slice(0, wrapped.index) + wrapped[1];
+      show();
+      return;
+    }
+
+    // आखिरी नंबर को (-n) में बदलें, ताकि 5-(-3) जैसे expression सही चलें
+    const num = lastNumber(expr);
+    if (!num) return;
+    expr = expr.slice(0, num.index) + '(-' + num.text + ')';
+    show();
+  }
+
+  // % : आखिरी नंबर को 100 से भाग दें
+  function percent() {
+    if (!expr) return;
+    const num = lastNumber(expr);
+    if (!num) return;
+    try {
+      const v = Number(num.text) / 100;
+      expr = expr.slice(0, num.index) + fmt(v);
+      justEvaluated = false;
+      show();
+    } catch (err) {
+      showError(err.message);
+    }
+  }
+
+  // ---------- Result formatting ----------
+  // exponent (1e+21) वाला नंबर वापस expression में नहीं जा सकता, इसलिए उसे रोकते हैं
+  function fmt(v) {
+    if (!Number.isFinite(v)) throw new Error('Result बहुत बड़ा है');
+    let s = String(Number(v.toPrecision(12)));   // 0.1+0.2 → 0.3
+    if (s.includes('e')) s = v.toFixed(12).replace(/\.?0+$/, '');   // बहुत छोटे नंबर
+    if (s.includes('e')) throw new Error('Result बहुत बड़ा है');
+    return s;
+  }
+
+  // = : evaluate करें
   function equals() {
     if (!expr) return;
     try {
       const value = evaluate(expr);
-      const text = formatNumber(value);
+      const text = pretty(fmt(value));
       exprEl.textContent = pretty(expr) + ' =';
-      resultEl.textContent = pretty(text);
+      resultEl.textContent = text;
       resultEl.classList.remove('error');
-      expr = text;
+      resultEl.classList.toggle('long', text.length > 10);
+      expr = fmt(value);
       justEvaluated = true;
     } catch (err) {
       // expression वैसा ही रहता है ताकि यूज़र उसे ठीक कर सके
-      exprEl.textContent = '';
-      resultEl.textContent = err.message;
-      resultEl.classList.add('error');
+      showError(err.message);
     }
-  }
-
-  function formatNumber(v) {
-    if (!Number.isFinite(v)) throw new Error('Result बहुत बड़ा है');
-    return String(Number(v.toPrecision(12)));   // 0.1+0.2 → 0.3
   }
 
   // ---------- Safe evaluator (eval का इस्तेमाल नहीं) ----------
   // Grammar:
   //   expr   := term (('+'|'-') term)*
   //   term   := factor (('*'|'/') factor)*
-  //   factor := '-' factor | '(' expr ')' | number
+  //   factor := ('-'|'+') factor | '(' expr ')' | number
   function evaluate(src) {
     let i = 0;
     const peek = () => src[i];
@@ -85,9 +153,9 @@
         const r = parseFactor();
         if (op === '/') {
           if (r === 0) throw new Error('0 से भाग नहीं हो सकता');
-          v = v / r;
+          v /= r;
         } else {
-          v = v * r;
+          v *= r;
         }
       }
       return v;
@@ -95,6 +163,7 @@
 
     function parseFactor() {
       if (peek() === '-') { i++; return -parseFactor(); }
+      if (peek() === '+') { i++; return parseFactor(); }
       if (peek() === '(') {
         i++;
         const v = parseExpr();
@@ -116,30 +185,32 @@
   }
 
   // ---------- Buttons ----------
-  document.querySelector('.keys').addEventListener('click', (e) => {
+  const ACTIONS = {
+    clear: clearAll,
+    back: backspace,
+    equals: equals,
+    sign: toggleSign,
+    percent: percent
+  };
+
+  keys.addEventListener('click', (e) => {
     const btn = e.target.closest('button');
     if (!btn) return;
     if (btn.dataset.value !== undefined) input(btn.dataset.value);
-    else if (btn.dataset.action === 'clear') clearAll();
-    else if (btn.dataset.action === 'back') backspace();
-    else if (btn.dataset.action === 'equals') equals();
+    else if (ACTIONS[btn.dataset.action]) ACTIONS[btn.dataset.action]();
   });
 
   // ---------- Keyboard ----------
   document.addEventListener('keydown', (e) => {
-    if (e.key.length === 1 && /[0-9+\-*/().]/.test(e.key)) {
-      e.preventDefault();
-      input(e.key);
-    } else if (e.key === 'Enter' || e.key === '=') {
-      e.preventDefault();
-      equals();
-    } else if (e.key === 'Backspace') {
-      e.preventDefault();
-      backspace();
-    } else if (e.key === 'Escape' || e.key === 'Delete') {
-      clearAll();
-    }
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    const k = e.key;
+    if (/^[0-9.()+\-*\/]$/.test(k)) { e.preventDefault(); input(k); }
+    else if (k === 'x' || k === 'X') { e.preventDefault(); input('*'); }
+    else if (k === '%') { e.preventDefault(); percent(); }
+    else if (k === 'Enter' || k === '=') { e.preventDefault(); equals(); }
+    else if (k === 'Backspace') { e.preventDefault(); backspace(); }
+    else if (k === 'Escape' || k === 'Delete') { clearAll(); }
   });
 
-  showInput();
+  show();
 })();
