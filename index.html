@@ -7,34 +7,40 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main class="calc">
-    <div id="expr" class="expr"></div>
-    <div id="result" class="result">0</div>
+  <main class="calc" aria-label="Calculator">
+    <section class="display">
+      <div id="expr" class="expr"></div>
+      <div id="result" class="result">0</div>
+    </section>
+
     <div class="keys">
-      <button data-action="clear" class="fn">C</button>
-      <button data-action="back" class="fn">⌫</button>
-      <button data-value="(" class="fn">(</button>
-      <button data-value=")" class="fn">)</button>
+      <button type="button" data-action="clear" class="fn" aria-label="Clear">C</button>
+      <button type="button" data-action="back" class="fn" aria-label="Backspace">⌫</button>
+      <button type="button" data-value="(" class="fn" aria-label="Open bracket">(</button>
+      <button type="button" data-value=")" class="fn" aria-label="Close bracket">)</button>
 
-      <button data-value="7">7</button>
-      <button data-value="8">8</button>
-      <button data-value="9">9</button>
-      <button data-value="/" class="op">÷</button>
+      <button type="button" data-action="sign" class="fn" aria-label="Toggle sign">±</button>
+      <button type="button" data-action="percent" class="fn" aria-label="Percent">%</button>
+      <button type="button" data-value="/" class="op" aria-label="Divide">÷</button>
+      <button type="button" data-value="*" class="op" aria-label="Multiply">×</button>
 
-      <button data-value="4">4</button>
-      <button data-value="5">5</button>
-      <button data-value="6">6</button>
-      <button data-value="*" class="op">×</button>
+      <button type="button" data-value="7">7</button>
+      <button type="button" data-value="8">8</button>
+      <button type="button" data-value="9">9</button>
+      <button type="button" data-value="-" class="op" aria-label="Subtract">−</button>
 
-      <button data-value="1">1</button>
-      <button data-value="2">2</button>
-      <button data-value="3">3</button>
-      <button data-value="-" class="op">−</button>
+      <button type="button" data-value="4">4</button>
+      <button type="button" data-value="5">5</button>
+      <button type="button" data-value="6">6</button>
+      <button type="button" data-value="+" class="op" aria-label="Add">+</button>
 
-      <button data-value="0">0</button>
-      <button data-value=".">.</button>
-      <button data-action="equals" class="eq">=</button>
-      <button data-value="+" class="op">+</button>
+      <button type="button" data-value="1">1</button>
+      <button type="button" data-value="2">2</button>
+      <button type="button" data-value="3">3</button>
+      <button type="button" data-action="equals" class="eq" aria-label="Equals">=</button>
+
+      <button type="button" data-value="0" class="zero">0</button>
+      <button type="button" data-value=".">.</button>
     </div>
   </main>
   <script src="app.js"></script>
