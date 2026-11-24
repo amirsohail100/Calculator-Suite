@@ -1,41 +1,25 @@
-# Calculator (WebView2 host + HTML/CSS/JS UI)
+# Calculator (WebView2 desktop build)
 
-## Folder structure
+यह folder **calculator-suite** repo का हिस्सा है। उसमें तीन अलग calculator versions हैं, और हर folder स्वतंत्र है। इनके बीच code share नहीं होता:
+
 ```
-Calculator/
-├── main.cpp          WebView2 host (C++)
-├── build.bat         MinGW build script
-├── index.html        UI
-├── style.css         UI style
-├── app.js            UI logic (calculator)
-├── WebView2/         ← आपको जोड़ना है (नीचे देखें)
-└── README.md
+calculator-suite/
+├── web-html-css/        सिर्फ़ browser वाला calculator (HTML + CSS + JS)
+├── streamlit/           Python Streamlit calculator
+└── desktop-webview2/    यह folder: C++ WebView2 host + वही HTML/CSS/JS UI, Windows .exe के रूप में
 ```
 
-## Step 1: WebView2 SDK जोड़ें (ज़रूरी)
-1. https://www.nuget.org/packages/Microsoft.Web.WebView2 खोलें और "Download package" दबाएँ.
-2. डाउनलोड हुई `.nupkg` फ़ाइल का नाम `.zip` करें और extract करें.
-3. Extract किया हुआ पूरा folder `Calculator\WebView2\` नाम से रखें.
-   इसमें `build\native\include\WebView2.h` और `build\native\x64\WebView2Loader.dll` होना चाहिए.
+## Keys
+- बटन: C, ⌫, ( ), ± (चिन्ह बदलें), %, ÷ × − +, =, 0–9 और `.`
+- Keyboard: अंक, `+ - * /`, `x` (गुणा), `( )`, `.`, `%`, Enter या `=`, Backspace, Esc या Delete (clear)
 
-## Step 2: Build
-MinGW-w64 (64-bit) installed हो और `g++` PATH में हो. फिर:
-```
-build.bat
-```
-या सीधे:
-```
-g++ -std=c++17 -municode -mwindows -DUNICODE -D_UNICODE -I WebView2\build\native\include main.cpp -o Calculator.exe -luuid -lole32 -luser32 -lgdi32
-```
-और `WebView2\build\native\x64\WebView2Loader.dll` को `Calculator.exe` के बगल में कॉपी करें.
-
-## Step 3: Run
-`Calculator.exe` पर double-click करें. Windows 10/11 पर WebView2 Runtime आमतौर पर पहले से होता है.
-न हो तो: https://developer.microsoft.com/microsoft-edge/webview2/ से Evergreen Bootstrapper install करें.
+## Build (Windows, MinGW-w64 64-bit)
+1. NuGet package `Microsoft.Web.WebView2` डाउनलोड करें, उसका नाम `.zip` करें, और उसे `WebView2\` folder में extract करें।
+2. `build.bat` चलाएँ। इससे `Calculator.exe` बनेगा और `WebView2Loader.dll` अपने आप कॉपी होगी।
+3. `Calculator.exe` चलाएँ। इसके लिए WebView2 Runtime चाहिए (Windows 10/11 पर आम तौर पर होता है)।
 
 ## Ship करना
-Folder को zip करें, जिसमें `Calculator.exe`, `WebView2Loader.dll`, `index.html`, `style.css`, `app.js` हों. दूसरे PC पर extract करके चलाएँ.
+`Calculator.exe`, `WebView2Loader.dll`, `index.html`, `style.css` और `app.js` को एक folder में zip करें।
 
 ## ज्ञात सीमाएँ
-- इस host में अभी native file save/open bridge नहीं है. वह अगला कदम है.
-- MinGW पर WebView2.h कभी-कभी warnings देता है. Error आए तो पूरा error text देखें.
+- Native file save/open bridge अभी नहीं है। यह अगला कदम है।
