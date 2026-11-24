@@ -1,0 +1,10 @@
+# Build output
+Calculator.exe
+*.dll
+*.obj
+*.o
+
+# WebView2 SDK download and runtime data
+webview2.zip
+WebView2/
+Calculator.exe.WebView2/
