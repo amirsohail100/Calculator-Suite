@@ -1,5 +1,3 @@
-#define UNICODE
-#define _UNICODE
 #include <windows.h>
 #include <objbase.h>
 #include <string>
@@ -151,7 +149,7 @@ int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE, PWSTR, int nShow) {
 
     g_hwnd = CreateWindowExW(0, L"QuadraCalcHost", L"Calculator",
                              WS_OVERLAPPEDWINDOW,
-                             CW_USEDEFAULT, CW_USEDEFAULT, 420, 620,
+                             CW_USEDEFAULT, CW_USEDEFAULT, 430, 700,
                              nullptr, nullptr, hInst, nullptr);
     if (!g_hwnd) return 1;
     ShowWindow(g_hwnd, nShow);
